@@ -4,65 +4,93 @@
 namespace { class EasyAJAX {} }
 namespace EasyAJAX {
 	class RequestHandler {
-		public	$ContentDirectory = '',
-				$homepage = 'index.html',
-				$LibraryRequestName = 'script',
-				$PageRequestName = 'page',
-				$AJAXRequestName = 'ajax',
-				$html = '';
+		public	$ContentDirectory = '',			// DIRECTORY OF PAGES
+				$homepage = 'index.html',		// DEFAULT HOMEPAGE
+				$type = 'REQUEST',				// 'REQUEST', 'GET', 'POST'
+				$LibraryRequestName = 'script',	// i.e. ?script=ajax
+				$PageRequestName = 'page',		// i.e. ?page=index.html
+				$AJAXRequestName = 'ajax',		// i.e. ?page=index.html&ajax
+				$html = '';						// RESULTING HTML STRING
+		private	$AcceptedRequestTypes = ['REQUEST','GET','POST'];
 		
-		final public function __construct ( bool $run = false, string $ContentDirectory = '', string $homepage = '' ) {
+		final public function __construct (
+				bool $run = false,
+				string $ContentDirectory = '',
+				string $homepage = '',
+				string $type = 'REQUEST'
+		){
 			$this->ContentDirectory = $ContentDirectory != '' ? $ContentDirectory : $this->ContentDirectory;
 			$this->homepage = $homepage != '' ? $homepage : $this->homepage;
+			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'REQUEST';
 			if ( $run ) {
-				$this->html = $this->getpage ( $this->ContentDirectory, $this->homepage );
+				$this->html = $this->request ( $this->ContentDirectory, $this->homepage, $this->type );
 			}
 		}
 		
-		final public function __invoke ( string $ContentDirectory = '', string $homepage = '' ):string {
+		final public function __invoke (
+				string $ContentDirectory = '',
+				string $homepage = '',
+				string $type = 'REQUEST'
+		):string {
 			$this->ContentDirectory = $ContentDirectory != '' ? $ContentDirectory : $this->ContentDirectory;
 			$this->homepage = $homepage != '' ? $homepage : $this->homepage;
-			return $this->getpage ( $this->ContentDirectory, $this->homepage );
+			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'REQUEST';
+			return $this->request ( $this->ContentDirectory, $this->homepage, $this->type );
 		}
 		
-		final public function getpage ( string $ContentDirectory = '', string $homepage = '' ):string {
+		final public function request (
+				string $ContentDirectory = '',
+				string $homepage = '',
+				string $type = 'REQUEST'
+		):string {
 			$this->ContentDirectory = $ContentDirectory != '' ? $ContentDirectory : $this->ContentDirectory;
 			$this->homepage = $homepage != '' ? $homepage : $this->homepage;
+			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'REQUEST';
+			if ( $this->type != 'REQUEST' && $this->type != $_SERVER['REQUEST_METHOD'] ){
+				http_response_code(501);
+				die ( "<script>alert('501 error. Unknown request.');</script>" );
+			}
 			$HTMLcontent = '';
-			if ( isset($_GET[$this->LibraryRequestName]) ) {
+			if ( isset($_REQUEST[$this->LibraryRequestName]) ) {
 				$js = new js();
-				die($js($_GET[$this->LibraryRequestName]));
-			} elseif ( isset($_GET[$this->PageRequestName]) && isset($_GET[$this->AJAXRequestName]) ) {
-				if ( $_GET[$this->PageRequestName]=='' && file_exists ($this->ContentDirectory . $homepage) ) {
-					die (file_get_contents($this->ContentDirectory . $homepage));
-				} elseif (	$_GET[$this->PageRequestName]!='' &&
-							file_exists ($file = $this->ContentDirectory . $_GET[$this->PageRequestName])) {
+				die($js($_REQUEST[$this->LibraryRequestName]));
+			} elseif ( isset($_REQUEST[$this->PageRequestName]) && isset($_REQUEST[$this->AJAXRequestName]) ) {
+				if ( $_REQUEST[$this->PageRequestName]=='' && file_exists ($this->ContentDirectory . $this->homepage) ) {
+					die (file_get_contents($this->ContentDirectory . $this->homepage));
+				} elseif (	$_REQUEST[$this->PageRequestName]!='' &&
+							file_exists ($file = $this->ContentDirectory . $_REQUEST[$this->PageRequestName]) ) {
 					die (file_get_contents($file));
 				} else {
-					if (file_exists($this->ContentDirectory . $homepage)) {
-						die ( file_get_contents($this->ContentDirectory . $homepage));
+					if (file_exists($this->ContentDirectory . $this->homepage)) {
+						die ( file_get_contents($this->ContentDirectory . $this->homepage));
 					} else {
 						die ( '<center class="alert">page not found</center>' );
 					}
 				}
-			}
-			elseif (isset($_GET[$this->PageRequestName])) {
-				if ( $_GET[$this->PageRequestName]=='' && file_exists ($this->ContentDirectory . $homepage) ) {
-					$HTMLcontent = file_get_contents($this->ContentDirectory . $homepage);
-				} elseif (	$_GET[$this->PageRequestName]!='' &&
-							file_exists ($file = $this->ContentDirectory . $_GET[$this->PageRequestName]) ) {
+			} elseif (isset($_REQUEST[$this->PageRequestName])) {
+				if ( $_REQUEST[$this->PageRequestName]=='' && file_exists ($this->ContentDirectory . $this->homepage) ) {
+					$HTMLcontent = file_get_contents($this->ContentDirectory . $this->homepage);
+				} elseif (	$_REQUEST[$this->PageRequestName]!='' &&
+							file_exists ($file = $this->ContentDirectory . $_REQUEST[$this->PageRequestName]) ) {
 					$HTMLcontent = file_get_contents($file);
 				} else {
-					if (file_exists($this->ContentDirectory . $homepage)) {
+					http_response_code(404);
+					if (file_exists($this->ContentDirectory . $this->homepage)) {
 						$HTMLcontent =	"<script>alert('page not found');</script>\n" .
-										file_get_contents($this->ContentDirectory . $homepage);
+										file_get_contents($this->ContentDirectory . $this->homepage);
 					} else {
 						$HTMLcontent = '<center class="alert">page not found</center>';
 					}
 				}
+			} elseif ( isset($_REQUEST[$this->AJAXRequestName]) ) {
+				if (file_exists($this->ContentDirectory . $this->homepage)) {
+					die ( file_get_contents ( $this->ContentDirectory . $this->homepage ) );
+				} else {
+					die ( '<center class="alert">page not found</center>' );
+				}
 			} else {
-				if (file_exists($this->ContentDirectory . $homepage)) {
-					$HTMLcontent = file_get_contents($this->ContentDirectory . $homepage);
+				if (file_exists($this->ContentDirectory . $this->homepage)) {
+					$HTMLcontent = file_get_contents($this->ContentDirectory . $this->homepage);
 				}
 			}
 			return $HTMLcontent;
@@ -122,6 +150,7 @@ function AJAXLink ( target, source, insert, attrib )
 function getpage ( url, target, insert, anonfn )
 {
 	if ( typeof url === 'undefined' ) { return false; }
+	if ( url === '' || url === './' && insert !== '' ) { url = '?' };
 	target = ( typeof target !== 'undefined' ) ? target : 'body';
 	insert = ( typeof insert !== 'undefined' ) ? insert : '';
 	anonfn = ( typeof anonfn !== 'undefined' ) ? anonfn : function(){};
@@ -216,6 +245,7 @@ function loadURL ( destURL, targetObj, urlAdditions, trimAfter )
 {
 	if ( typeof urlAdditions === 'undefined' ) urlAdditions = '';
 	if ( typeof targetObj === 'undefined' ) targetObj = 'body';
+	if ( destURL === '' || destURL === './' && urlAdditions !== '' ) { destURL = '?'; }
 	loader(targetObj, function(){
 		if ( window.location.search == '' || destURL == window.location.search + urlAdditions ){
 			loadList ( destURL, targetObj );
