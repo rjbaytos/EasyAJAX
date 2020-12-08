@@ -1,6 +1,6 @@
 <?Php
 // EASY AJAX LIBRARY BY RHYAN JILL
-// Email: rhyanjillrb@gmail.com
+// GitHub: https://github.com/rjbaytos/EasyAJAX
 namespace { class EasyAJAX {} }
 namespace EasyAJAX {
 	class RequestHandler {
