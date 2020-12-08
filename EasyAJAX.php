@@ -3,10 +3,10 @@
 // GitHub: https://github.com/rjbaytos/EasyAJAX
 namespace { class EasyAJAX {} }
 namespace EasyAJAX {
-	class RequestHandler {
+	class PageNavigator {
 		public	$ContentDirectory = '',			// DIRECTORY OF PAGES
 				$homepage = 'index.html',		// DEFAULT HOMEPAGE
-				$type = 'REQUEST',				// 'REQUEST', 'GET', 'POST'
+				$type = 'GET',					// 'REQUEST', 'GET', 'POST'
 				$LibraryRequestName = 'script',	// i.e. ?script=ajax
 				$PageRequestName = 'page',		// i.e. ?page=index.html
 				$AJAXRequestName = 'ajax',		// i.e. ?page=index.html&ajax
@@ -17,11 +17,11 @@ namespace EasyAJAX {
 				bool $run = false,
 				string $ContentDirectory = '',
 				string $homepage = '',
-				string $type = 'REQUEST'
+				string $type = 'GET'
 		){
 			$this->ContentDirectory = $ContentDirectory != '' ? $ContentDirectory : $this->ContentDirectory;
 			$this->homepage = $homepage != '' ? $homepage : $this->homepage;
-			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'REQUEST';
+			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'GET';
 			if ( $run ) {
 				$this->html = $this->request ( $this->ContentDirectory, $this->homepage, $this->type );
 			}
@@ -30,22 +30,22 @@ namespace EasyAJAX {
 		final public function __invoke (
 				string $ContentDirectory = '',
 				string $homepage = '',
-				string $type = 'REQUEST'
+				string $type = 'GET'
 		):string {
 			$this->ContentDirectory = $ContentDirectory != '' ? $ContentDirectory : $this->ContentDirectory;
 			$this->homepage = $homepage != '' ? $homepage : $this->homepage;
-			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'REQUEST';
+			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'GET';
 			return $this->request ( $this->ContentDirectory, $this->homepage, $this->type );
 		}
 		
 		final public function request (
 				string $ContentDirectory = '',
 				string $homepage = '',
-				string $type = 'REQUEST'
+				string $type = 'GET'
 		):string {
 			$this->ContentDirectory = $ContentDirectory != '' ? $ContentDirectory : $this->ContentDirectory;
 			$this->homepage = $homepage != '' ? $homepage : $this->homepage;
-			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'REQUEST';
+			$this->type = in_array( strtoupper($type), $this->AcceptedRequestTypes ) ? strtoupper($type) : 'GET';
 			if ( $this->type != 'REQUEST' && $this->type != $_SERVER['REQUEST_METHOD'] ){
 				http_response_code(501);
 				die ( "<script>alert('501 error. Unknown request.');</script>" );
